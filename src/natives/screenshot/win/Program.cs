@@ -5,14 +5,34 @@ using System.Runtime.InteropServices;
 using System.Drawing;
 using System.Drawing.Imaging;
 using System.IO;
+using System.Windows.Forms;
+using System.Threading;
 
 namespace Screenshot {
     class Program {
         //Consts
         const int GW_CHILD = 5;
         const int GW_HWNDNEXT = 2;
+        const int SW_FORCEMINIMIZE = 11;
+        const int SW_RESTORE = 9;
+
+        const int MINIMIZE_MAXIMIZE_DELAY = 20;
+        const int BRING_TO_FOREGROUND_DELAY = 500;
 
         //Imports
+        [DllImport("user32.dll")]
+        static extern bool IsZoomed(IntPtr hWnd);
+
+        [DllImport("user32.dll")]
+        public static extern IntPtr GetForegroundWindow();
+
+        [DllImport("user32.dll")]
+        [return: MarshalAs(UnmanagedType.Bool)]
+        static extern bool ShowWindowAsync(IntPtr hWnd, uint nCmdShow);
+
+        [DllImport("user32.dll", SetLastError = true)]
+        internal static extern bool MoveWindow(IntPtr hWnd, int X, int Y, int nWidth, int nHeight, bool bRepaint);
+
         [DllImport("user32.dll", SetLastError = true)]
         static extern IntPtr GetWindowInfo(IntPtr hWnd, ref WindowInfo pwi);
 
@@ -103,7 +123,94 @@ namespace Screenshot {
             return wi;
         }
 
-        static Bitmap Screenshot(IntPtr hwnd, WindowInfo wi, string browser) {
+        static void PlaceWindowOnScreen(IntPtr hWnd) {
+            WindowInfo wi = new WindowInfo();
+            GetWindowInfo(hWnd, ref wi);
+
+            int maxArea = 0;
+
+            Rectangle resultWindowRect = new Rectangle(
+                wi.rcWindow.left,
+                wi.rcWindow.top,
+                wi.rcWindow.right - wi.rcWindow.left,
+                wi.rcWindow.bottom - wi.rcWindow.top
+            );
+
+            bool found = false;
+
+            foreach(var s in Screen.AllScreens) {
+                bool leftBorderOnScreen = (wi.rcWindow.left >= s.WorkingArea.Left) && (wi.rcWindow.left < s.WorkingArea.Right),
+                     rightBorderOnScreen = (wi.rcWindow.right > s.WorkingArea.Left) && (wi.rcWindow.right <= s.WorkingArea.Right),
+                     topBorderOnScreen = (wi.rcWindow.top >= s.WorkingArea.Top) && (wi.rcWindow.top < s.WorkingArea.Bottom),
+                     bottomBorderOnScreen = (wi.rcWindow.bottom > s.WorkingArea.Top) && (wi.rcWindow.bottom <= s.WorkingArea.Bottom);
+
+                int widthOnScreen = 0,
+                    heightOnScreen = 0;
+
+                if(leftBorderOnScreen)
+                    widthOnScreen = rightBorderOnScreen ? wi.rcWindow.right - wi.rcWindow.left : s.WorkingArea.Right - wi.rcWindow.left;
+                else if(rightBorderOnScreen)
+                    widthOnScreen = wi.rcWindow.right - s.WorkingArea.Left;
+
+                if(topBorderOnScreen)
+                    heightOnScreen = bottomBorderOnScreen ? wi.rcWindow.bottom - wi.rcWindow.top : s.WorkingArea.Bottom - wi.rcWindow.top;
+                else if(bottomBorderOnScreen)
+                    heightOnScreen = wi.rcWindow.bottom - s.WorkingArea.Top;
+
+                int area = widthOnScreen * heightOnScreen;
+
+                if(area > maxArea) {
+                    maxArea = area;
+
+                    if(!leftBorderOnScreen)
+                        resultWindowRect.X = s.WorkingArea.X;
+                    else {
+                        resultWindowRect.X = !rightBorderOnScreen ?
+                            s.WorkingArea.Right - wi.rcWindow.right + wi.rcWindow.left :
+                            wi.rcWindow.left;
+                    }
+
+                    if(!topBorderOnScreen)
+                        resultWindowRect.Y = s.WorkingArea.Y;
+                    else {
+                        resultWindowRect.Y = !bottomBorderOnScreen ?
+                            s.WorkingArea.Bottom - wi.rcWindow.bottom + wi.rcWindow.top :
+                            wi.rcWindow.top;
+                    }
+
+                    found = true;
+                }
+            }
+
+            if(found)
+                MoveWindow(hWnd, resultWindowRect.X, resultWindowRect.Y, resultWindowRect.Width, resultWindowRect.Height, true);
+        }
+
+        static void ForegroundWindow(IntPtr hwnd) {
+            ShowWindowAsync(hwnd, SW_FORCEMINIMIZE);
+            Thread.Sleep(MINIMIZE_MAXIMIZE_DELAY);
+            ShowWindowAsync(hwnd, SW_RESTORE);
+            Thread.Sleep(BRING_TO_FOREGROUND_DELAY);
+        }
+
+        static Bitmap CaptureFromScreen(IntPtr hwnd, WindowInfo wi) {
+            IntPtr fgHwnd = GetForegroundWindow();
+
+            if(fgHwnd != hwnd)
+                ForegroundWindow(hwnd);
+
+            Bitmap windowBitmap = new Bitmap(wi.rcWindow.right - wi.rcWindow.left, wi.rcWindow.bottom - wi.rcWindow.top, System.Drawing.Imaging.PixelFormat.Format32bppRgb);
+            Graphics graphicsWindow = Graphics.FromImage(windowBitmap);
+
+            graphicsWindow.CopyFromScreen(new Point(wi.rcWindow.left, wi.rcWindow.top), Point.Empty, windowBitmap.Size, CopyPixelOperation.SourceCopy);
+
+            if(fgHwnd != hwnd)
+                ForegroundWindow(fgHwnd);
+
+            return windowBitmap;
+        }
+
+        static Bitmap PrintWindow(IntPtr hwnd, WindowInfo wi, string browser) {
             Bitmap windowBitmap = new Bitmap(wi.rcWindow.right - wi.rcWindow.left, wi.rcWindow.bottom - wi.rcWindow.top, System.Drawing.Imaging.PixelFormat.Format32bppRgb);
             Graphics graphicsWindow = Graphics.FromImage(windowBitmap);
             IntPtr hdc = graphicsWindow.GetHdc();
@@ -115,6 +222,19 @@ namespace Screenshot {
 
             graphicsWindow.ReleaseHdc(hdc);
             graphicsWindow.Flush();
+
+            return windowBitmap;
+        }
+
+        static Bitmap Screenshot(IntPtr hwnd, string browser) {
+            if(browser == "applicationframehost")
+                PlaceWindowOnScreen(hwnd);
+
+            WindowInfo wi = GetWindowInfo(hwnd, browser);
+
+            Bitmap windowBitmap = browser == "applicationframehost" ?
+                CaptureFromScreen(hwnd, wi) :
+                PrintWindow(hwnd, wi, browser);
 
             Bitmap clientAreaBitmap = windowBitmap.Clone(new Rectangle(
                 new Point(wi.rcClient.left - wi.rcWindow.left, wi.rcClient.top - wi.rcWindow.top),
@@ -172,8 +292,7 @@ namespace Screenshot {
             string dirPath = args[2];
             string fileName = args[3];
 
-            WindowInfo windowInfo = GetWindowInfo(hwnd, browser);
-            Bitmap screenshot = Screenshot(hwnd, windowInfo, browser);
+            Bitmap screenshot = Screenshot(hwnd, browser);
             SaveBitmap(screenshot, dirPath, fileName);
 
             if(createThumbnail) {

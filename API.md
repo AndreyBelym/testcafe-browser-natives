@@ -40,10 +40,23 @@ Closes the browser window where the specified web page is opened.
 Returns the list of the [BrowserInfo](#BrowserInfo) objects that contain information about the browsers installed on the machine.
 
 **Kind**: global [async](http://tc39.github.io/ecmascript-asyncawait/) function  
-**Returns**: <code>Object.&lt;string, BrowserInfo&gt;</code> - List of the [BrowserInfo](#BrowserInfo) objects  containing information about the browsers installed on the machine.  
+**Returns**: <code>Object.&lt;string, BrowserInfo&gt;</code> - List of the [BrowserInfo](#BrowserInfo) objects
+  containing information about the browsers installed on the machine.  
 **Example**  
 ```js
-{  chrome: {      path: 'C:\\ProgramFiles\\...\\chrome.exe',      cmd: '--new-window',      macOpenCmdTemplate: 'open -n -a "{{{path}}}" --args {{{pageUrl}}} {{{cmd}}}'  },  firefox: {      path: 'C:\\ProgramFiles\\...\\firefox.exe',      cmd: '-new-window',      macOpenCmdTemplate: 'open -a "{{{path}}}" {{{pageUrl}}} --args {{{cmd}}}'  }}
+{
+  chrome: {
+      path: 'C:\\ProgramFiles\\...\\chrome.exe',
+      cmd: '--new-window',
+      macOpenCmdTemplate: 'open -n -a "{{{path}}}" --args {{{pageUrl}}} {{{cmd}}}'
+  },
+
+  firefox: {
+      path: 'C:\\ProgramFiles\\...\\firefox.exe',
+      cmd: '-new-window',
+      macOpenCmdTemplate: 'open -a "{{{path}}}" {{{pageUrl}}} --args {{{cmd}}}'
+  }
+}
 ```
 <a name="open"></a>
 ## *async* open(browserInfo, pageUrl)
@@ -100,11 +113,16 @@ Object that contains information about the browser installed on the machine.
 
 | Name | Type | Description |
 | --- | --- | --- |
-| path | <code>string</code> | The path to the executable file that starts the browser. |
+| path | <code>string</code> &#124; <code>undefined</code> | The path to the executable file that starts the browser. It may be undefined if                                      BrowserInfo#winOpenCmdTemplate is defined. |
 | cmd | <code>string</code> | Additional command line parameters. |
 | macOpenCmdTemplate | <code>string</code> &#124; <code>undefined</code> | A [Mustache template](https://github.com/janl/mustache.js#templates)                                                    that provides parameters for launching the browser on a MacOS machine. |
+| winOpenCmdTemplate | <code>string</code> &#124; <code>undefined</code> | A [Mustache template](https://github.com/janl/mustache.js#templates)                                                    that provides parameters for launching the browser on a Windows machine,                                                    if BrowserInfo#path is undefined. |
 
 **Example**  
 ```js
-{      path: 'C:\\ProgramFiles\\...\\firefox.exe',      cmd: '-new-window',      macOpenCmdTemplate: 'open -a "{{{path}}}" {{{pageUrl}}} --args {{{cmd}}}' }
+{
+      path: 'C:\\ProgramFiles\\...\\firefox.exe',
+      cmd: '-new-window',
+      macOpenCmdTemplate: 'open -a "{{{path}}}" {{{pageUrl}}} --args {{{cmd}}}'
+ }
 ```

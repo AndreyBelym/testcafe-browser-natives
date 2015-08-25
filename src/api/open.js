@@ -14,13 +14,15 @@ import { MESSAGES, getText } from '../messages';
  * @param {string} pageUrl - Specifies the web page URL.
  */
 export default async function (browserInfo, pageUrl) {
-    if (!browserInfo.path)
-        throw new Error(getText(MESSAGES.browserPathNotSet));
+    if (!OS.win || !browserInfo.winOpenCmdTemplate) {
+        if (!browserInfo.path)
+            throw new Error(getText(MESSAGES.browserPathNotSet));
 
-    var fileExists = await exists(browserInfo.path);
+        var fileExists = await exists(browserInfo.path);
 
-    if (!fileExists)
-        throw new Error(getText(MESSAGES.unableToRunBrowser, browserInfo.path));
+        if (!fileExists)
+            throw new Error(getText(MESSAGES.unableToRunBrowser, browserInfo.path));
+    }
 
     var command = '';
 
@@ -28,7 +30,13 @@ export default async function (browserInfo, pageUrl) {
         var browserDirPath      = path.dirname(browserInfo.path);
         var browserExecFileName = path.basename(browserInfo.path);
 
-        command = `start /D "${browserDirPath}" ${browserExecFileName} ${browserInfo.cmd} ${pageUrl}`;
+        if (browserInfo.winOpenCmdTemplate) {
+            command = Mustache.render(browserInfo.winOpenCmdTemplate, {
+                pageUrl: pageUrl
+            });
+        }
+        else
+            command = `start /D "${browserDirPath}" ${browserExecFileName} ${browserInfo.cmd} ${pageUrl}`;
     }
     else if (OS.mac) {
         command = Mustache.render(browserInfo.macOpenCmdTemplate, {
