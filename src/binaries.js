@@ -21,7 +21,13 @@ else if (OS.mac) {
         resize:     toAbsPath('../bin/mac/resize.scpt')
     };
 }
-else if (OS.linux)
-    BINARIES = {};
+else if (OS.linux) {
+    BINARIES = {
+        findWindow: toAbsPath('../bin/lin/find-window.sh'),
+        close:      toAbsPath('../bin/lin/close.sh'),
+        screenshot: toAbsPath('../bin/lin/screenshot.sh'),
+        resize:     toAbsPath('../bin/lin/resize.sh')
+    };
+}
 
 export default BINARIES;

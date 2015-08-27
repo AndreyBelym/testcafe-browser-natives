@@ -17,18 +17,19 @@ export default async function (pageUrl, screenshotPath) {
     var thumbnailDirPath  = path.join(screenshotDirPath, 'thumbnails');
     var windowDescription = void 0;
 
-    if (OS.win) {
+    if (OS.mac)
+        windowDescription = [pageUrl];
+    else {
         var windowParams = await findWindow(pageUrl);
 
         if (!windowParams)
             return;
 
-        windowDescription = [windowParams.hwnd, windowParams.browser];
+        if (OS.win)
+            windowDescription = [windowParams.hwnd, windowParams.browser];
+        else
+            windowDescription = [windowParams.windowID];
     }
-    else if (OS.mac)
-        windowDescription = [pageUrl];
-    else
-        return;
 
     await execFile(BINARIES.screenshot, windowDescription.concat([
         screenshotDirPath,

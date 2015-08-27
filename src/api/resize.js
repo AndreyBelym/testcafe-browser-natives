@@ -66,7 +66,7 @@ export default async function (pageUrl, ...args) {
     else if (OS.mac)
         resizeArguments = [windowDescription.windowName, windowDescription.processName];
     else
-        return;
+        resizeArguments = [windowDescription.windowID];
 
     var { width, height } = await parseArgs(args);
 

@@ -31,7 +31,7 @@ export default async function (browserInfo, pageUrl) {
         });
     }
     else
-        return; //TODO: support OS.linux
+        command = `"${browserInfo.path}" "${browserInfo.cmd}" "${pageUrl}" 1<&- >/dev/null 2>&1 &`;
 
     try {
         await exec(command);

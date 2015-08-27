@@ -164,13 +164,17 @@ exports.takeScreenshot = function (req, res) {
                     }).length === 0;
 
                 if (screenshotIsNotAdded) {
+                    var screenshotFilename = path.basename(screenshotPath);
+                    var screenshotDirPath  = path.dirname(screenshotPath);
+                    var thumbnailPath      = path.join(screenshotDirPath, 'thumbnails', screenshotFilename);
+
                     browser.screenshots.push({
-                        path: screenshotPath,
-                        url:  '/get-screenshot/' + encodeURIComponent(screenshotPath)
+                        path:          screenshotPath,
+                        thumbnailPath: thumbnailPath,
+                        url:           '/get-image/' + encodeURIComponent(screenshotPath),
+                        thumbnailURL:  '/get-image/' + encodeURIComponent(thumbnailPath)
                     });
                 }
-
-                exec((OS.mac ? 'open ' : '') + screenshotPath);
 
                 res.locals = { screenshots: browser.screenshots };
                 res.render('screenshots');
@@ -183,15 +187,16 @@ exports.takeScreenshot = function (req, res) {
     runAsyncForBrowser(req.body.browserId, res, screenshot);
 };
 
-exports.getScreenshot = function (req, res) {
-    var screenshotPath = decodeURIComponent(req.params.path);
-    var i              = 0;
-    var j              = 0;
+exports.getImage = function (req, res) {
+    var imagePath = decodeURIComponent(req.params.path);
+    var i         = 0;
+    var j         = 0;
 
     for (i = 0; i < browsers.length; i++) {
         for (j = 0; j < browsers[i].screenshots.length; j++) {
-            if (browsers[i].screenshots[j].path === screenshotPath) {
-                res.sendfile(screenshotPath);
+            if (browsers[i].screenshots[j].path === imagePath ||
+                browsers[i].screenshots[j].thumbnailPath === imagePath) {
+                res.sendfile(imagePath);
                 return;
             }
         }

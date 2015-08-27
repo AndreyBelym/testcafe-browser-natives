@@ -8,5 +8,7 @@ node_modules
 *.user
 *.sln
 
+*.swp
+
 src/natives/*/win/bin/**
 src/natives/*/win/obj/**

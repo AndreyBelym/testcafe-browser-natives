@@ -17,7 +17,7 @@ export default async function (pageUrl) {
     else if (OS.mac)
         closeWindowArguments = [windowDescription.windowName, windowDescription.processName];
     else
-        return;
+        closeWindowArguments = [windowDescription.windowID];
 
     await execFile(BINARIES.close, closeWindowArguments);
 }

@@ -4,9 +4,6 @@ import BINARIES from '../binaries';
 
 
 export default async function (pageUrl) {
-    if (OS.linux)
-        return null;
-
     var res          = null;
     var windowParams = [];
 
@@ -28,4 +25,7 @@ export default async function (pageUrl) {
 
         return { processName: windowParams[0], windowName: windowParams[1] };
     }
+
+    if (OS.linux)
+        return { windowID: res.trim() };
 }

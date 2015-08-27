@@ -69,12 +69,28 @@ gulp.task('copy-mac-scripts', ['clean-mac-bin'], function () {
         .pipe(gulp.dest('bin/mac'));
 });
 
+//Linux bin
+gulp.task('clean-lin-bin', function (callback) {
+    del('bin/lin', callback);
+});
+
+gulp.task('copy-lin-scripts', ['clean-lin-bin'], function () {
+    return gulp
+        .src('src/natives/**/lin/*.sh')
+        .pipe(flatten())
+        .pipe(gulp.dest('bin/lin'));
+});
+
 // Test
 gulp.task('run-playground-win', ['build-win'], function () {
     require('./test/playground/index');
 });
 
 gulp.task('run-playground-mac', ['build-mac'], function () {
+    require('./test/playground/index');
+});
+
+gulp.task('run-playground-lin', ['build-lin'], function () {
     require('./test/playground/index');
 });
 
@@ -115,3 +131,4 @@ gulp.task('build-lib', ['lint', 'clean-lib'], function () {
 
 gulp.task('build-win', ['build-lib', 'copy-win-executables']);
 gulp.task('build-mac', ['build-lib', 'build-mac-executables', 'copy-mac-scripts']);
+gulp.task('build-lin', ['build-lib', 'copy-lin-scripts']);

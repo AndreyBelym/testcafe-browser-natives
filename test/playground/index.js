@@ -31,7 +31,7 @@ app.post('/open', routes.open);
 app.post('/close', routes.close);
 app.post('/resize', routes.resize);
 app.post('/take-screenshot', routes.takeScreenshot);
-app.get('/get-screenshot/:path', routes.getScreenshot);
+app.get('/get-image/:path', routes.getImage);
 app.get('/test-page/:id', routes.sandboxPage);
 
 app.get('/*', routes.notFound);
@@ -39,6 +39,15 @@ app.get('/*', routes.notFound);
 routes.init(PORT)
     .then(function () {
         app.listen(PORT);
-        childProcess.exec((OS.mac ? 'open ' : 'start ') + 'http://localhost:' + PORT);
+        var openURLCommand = '';
+
+        if (OS.win)
+            openURLCommand = 'start';
+        else if (OS.mac)
+            openURLCommand = 'open';
+        else
+            openURLCommand = 'xdg-open';
+
+        childProcess.exec(openURLCommand + ' http://localhost:' + PORT);
     });
 
