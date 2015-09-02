@@ -79,6 +79,73 @@ namespace Screenshot {
             }
         }
 
+        struct WindowBorderOnScreenFlags {
+            public bool leftBorderOnScreen;
+            public bool rightBorderOnScreen;
+            public bool topBorderOnScreen;
+            public bool bottomBorderOnScreen;
+
+            public WindowBorderOnScreenFlags(WindowInfo wi, Screen s) {
+                leftBorderOnScreen = (wi.rcWindow.left >= s.WorkingArea.Left) && (wi.rcWindow.left < s.WorkingArea.Right);
+                rightBorderOnScreen = (wi.rcWindow.right > s.WorkingArea.Left) && (wi.rcWindow.right <= s.WorkingArea.Right);
+                topBorderOnScreen = (wi.rcWindow.top >= s.WorkingArea.Top) && (wi.rcWindow.top < s.WorkingArea.Bottom);
+                bottomBorderOnScreen = (wi.rcWindow.bottom > s.WorkingArea.Top) && (wi.rcWindow.bottom <= s.WorkingArea.Bottom);
+            }
+        }
+
+        static bool isMSEdgeBrowser(string browser){
+            //NOTE: Edge is an Universal Windows App and managed by process 'applicationframehost.exe'.
+            return browser == "applicationframehost";
+        }
+
+        static int GetWindowVisibleArea(WindowInfo wi, Screen s) {
+            WindowBorderOnScreenFlags flags = new WindowBorderOnScreenFlags(wi, s);
+
+            int visibleWidth = 0,
+                visibleHeight = 0;
+
+            if(flags.leftBorderOnScreen)
+                visibleWidth = flags.rightBorderOnScreen ? wi.rcWindow.right - wi.rcWindow.left : s.WorkingArea.Right - wi.rcWindow.left;
+            else if(flags.rightBorderOnScreen)
+                visibleWidth = wi.rcWindow.right - s.WorkingArea.Left;
+
+            if(flags.topBorderOnScreen)
+                visibleHeight = flags.bottomBorderOnScreen ? wi.rcWindow.bottom - wi.rcWindow.top : s.WorkingArea.Bottom - wi.rcWindow.top;
+            else if(flags.bottomBorderOnScreen)
+                visibleHeight = wi.rcWindow.bottom - s.WorkingArea.Top;
+
+            return visibleWidth * visibleHeight;
+        }
+
+        static Rectangle GetVisibleRectangle(WindowInfo wi, Screen s) {
+            Rectangle resultWindowRect = new Rectangle(
+                wi.rcWindow.left,
+                wi.rcWindow.top,
+                wi.rcWindow.right - wi.rcWindow.left,
+                wi.rcWindow.bottom - wi.rcWindow.top
+            );
+
+            WindowBorderOnScreenFlags flags = new WindowBorderOnScreenFlags(wi, s);
+
+            if(!flags.leftBorderOnScreen)
+                resultWindowRect.X = s.WorkingArea.X;
+            else {
+                resultWindowRect.X = !flags.rightBorderOnScreen ?
+                    s.WorkingArea.Right - wi.rcWindow.right + wi.rcWindow.left :
+                    wi.rcWindow.left;
+            }
+
+            if(!flags.topBorderOnScreen)
+                resultWindowRect.Y = s.WorkingArea.Y;
+            else {
+                resultWindowRect.Y = !flags.bottomBorderOnScreen ?
+                    s.WorkingArea.Bottom - wi.rcWindow.bottom + wi.rcWindow.top :
+                    wi.rcWindow.top;
+            }
+
+            return resultWindowRect;
+        }
+
         static WindowInfo GetWindowInfo(IntPtr hwnd, string browser) {
             WindowInfo wi = new WindowInfo();
             GetWindowInfo(hwnd, ref wi);
@@ -127,56 +194,19 @@ namespace Screenshot {
             WindowInfo wi = new WindowInfo();
             GetWindowInfo(hWnd, ref wi);
 
-            int maxArea = 0;
+            int maxVisibleArea = 0;
 
-            Rectangle resultWindowRect = new Rectangle(
-                wi.rcWindow.left,
-                wi.rcWindow.top,
-                wi.rcWindow.right - wi.rcWindow.left,
-                wi.rcWindow.bottom - wi.rcWindow.top
-            );
+            Rectangle resultWindowRect = new Rectangle();
 
             bool found = false;
 
             foreach(var s in Screen.AllScreens) {
-                bool leftBorderOnScreen = (wi.rcWindow.left >= s.WorkingArea.Left) && (wi.rcWindow.left < s.WorkingArea.Right),
-                     rightBorderOnScreen = (wi.rcWindow.right > s.WorkingArea.Left) && (wi.rcWindow.right <= s.WorkingArea.Right),
-                     topBorderOnScreen = (wi.rcWindow.top >= s.WorkingArea.Top) && (wi.rcWindow.top < s.WorkingArea.Bottom),
-                     bottomBorderOnScreen = (wi.rcWindow.bottom > s.WorkingArea.Top) && (wi.rcWindow.bottom <= s.WorkingArea.Bottom);
+                int visibleArea = GetWindowVisibleArea(wi, s);
 
-                int widthOnScreen = 0,
-                    heightOnScreen = 0;
+                if(visibleArea > maxVisibleArea) {
+                    maxVisibleArea = visibleArea;
 
-                if(leftBorderOnScreen)
-                    widthOnScreen = rightBorderOnScreen ? wi.rcWindow.right - wi.rcWindow.left : s.WorkingArea.Right - wi.rcWindow.left;
-                else if(rightBorderOnScreen)
-                    widthOnScreen = wi.rcWindow.right - s.WorkingArea.Left;
-
-                if(topBorderOnScreen)
-                    heightOnScreen = bottomBorderOnScreen ? wi.rcWindow.bottom - wi.rcWindow.top : s.WorkingArea.Bottom - wi.rcWindow.top;
-                else if(bottomBorderOnScreen)
-                    heightOnScreen = wi.rcWindow.bottom - s.WorkingArea.Top;
-
-                int area = widthOnScreen * heightOnScreen;
-
-                if(area > maxArea) {
-                    maxArea = area;
-
-                    if(!leftBorderOnScreen)
-                        resultWindowRect.X = s.WorkingArea.X;
-                    else {
-                        resultWindowRect.X = !rightBorderOnScreen ?
-                            s.WorkingArea.Right - wi.rcWindow.right + wi.rcWindow.left :
-                            wi.rcWindow.left;
-                    }
-
-                    if(!topBorderOnScreen)
-                        resultWindowRect.Y = s.WorkingArea.Y;
-                    else {
-                        resultWindowRect.Y = !bottomBorderOnScreen ?
-                            s.WorkingArea.Bottom - wi.rcWindow.bottom + wi.rcWindow.top :
-                            wi.rcWindow.top;
-                    }
+                    resultWindowRect = GetVisibleRectangle(wi, s);
 
                     found = true;
                 }
@@ -227,12 +257,14 @@ namespace Screenshot {
         }
 
         static Bitmap Screenshot(IntPtr hwnd, string browser) {
-            if(browser == "applicationframehost")
+            //NOTE: We are capturing directly screen area in order to take screenshot of Microsoft Edge,
+            //so we must be sure, that all window area is placed in screen borders.
+            if(isMSEdgeBrowser(browser))
                 PlaceWindowOnScreen(hwnd);
 
             WindowInfo wi = GetWindowInfo(hwnd, browser);
 
-            Bitmap windowBitmap = browser == "applicationframehost" ?
+            Bitmap windowBitmap = isMSEdgeBrowser(browser) ?
                 CaptureFromScreen(hwnd, wi) :
                 PrintWindow(hwnd, wi, browser);
 
@@ -246,7 +278,6 @@ namespace Screenshot {
             }
 
             return clientAreaBitmap;
-
         }
 
         static void SaveBitmap(Bitmap bmp, string dirPath, string fileName) {

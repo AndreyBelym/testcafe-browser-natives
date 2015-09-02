@@ -43,4 +43,23 @@ describe('open', function () {
             })
             .catch(done);
     });
+
+    it('Should not raise an error if winOpenCmdTemplate is defined and browser path is not specified', function (done) {
+        var browserInfo = {
+            path:               '',
+            winOpenCmdTemplate: 'echo test'
+        };
+
+        var open = browserNatives
+            .open(browserInfo)
+            .catch(function (err) {
+                throw new Error('Promise resolution expected');
+            });
+
+        open
+            .then(function () {
+                done();
+            })
+            .catch(done);
+    });
 });

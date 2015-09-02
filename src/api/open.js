@@ -4,6 +4,52 @@ import OS from '../utils/os';
 import { exec } from '../utils/exec';
 import exists from '../utils/fs-exists-promised';
 import { MESSAGES, getText } from '../messages';
+import BINARIES from '../binaries';
+
+
+async function checkBrowserPath (browserInfo) {
+    if (!browserInfo.path) {
+        //NOTE: Path may be undefined when winOpenCmdTemplate is specified (e.g. MS Edge)
+        if (browserInfo.winOpenCmdTemplate)
+            return;
+
+        throw new Error(getText(MESSAGES.browserPathNotSet));
+    }
+
+    var fileExists = await exists(browserInfo.path);
+
+    if (!fileExists)
+        throw new Error(getText(MESSAGES.unableToRunBrowser, browserInfo.path));
+}
+
+function getWinOpenCommand (browserInfo, pageUrl) {
+    if (browserInfo.winOpenCmdTemplate) {
+        return Mustache.render(browserInfo.winOpenCmdTemplate, {
+            pageUrl: pageUrl
+        });
+    }
+
+    var browserDirPath      = path.dirname(browserInfo.path);
+    var browserExecFileName = path.basename(browserInfo.path);
+
+    return `start /D "${browserDirPath}" ${browserExecFileName} ${browserInfo.cmd} ${pageUrl}`;
+}
+
+function getMacOpenCommand (browserInfo, pageUrl) {
+    return Mustache.render(browserInfo.macOpenCmdTemplate, {
+        path:    browserInfo.path,
+        cmd:     browserInfo.cmd,
+        pageUrl: pageUrl
+    });
+}
+
+var getOpenCommand = null;
+
+if (OS.win)
+    getOpenCommand = getWinOpenCommand;
+else if (OS.mac)
+    getOpenCommand = getMacOpenCommand;
+
 
 /**
  * Opens the web page in a new instance of the browser.
@@ -14,39 +60,12 @@ import { MESSAGES, getText } from '../messages';
  * @param {string} pageUrl - Specifies the web page URL.
  */
 export default async function (browserInfo, pageUrl) {
-    if (!OS.win || !browserInfo.winOpenCmdTemplate) {
-        if (!browserInfo.path)
-            throw new Error(getText(MESSAGES.browserPathNotSet));
+    if (!getOpenCommand)
+        return;
 
-        var fileExists = await exists(browserInfo.path);
+    await checkBrowserPath(browserInfo);
 
-        if (!fileExists)
-            throw new Error(getText(MESSAGES.unableToRunBrowser, browserInfo.path));
-    }
-
-    var command = '';
-
-    if (OS.win) {
-        var browserDirPath      = path.dirname(browserInfo.path);
-        var browserExecFileName = path.basename(browserInfo.path);
-
-        if (browserInfo.winOpenCmdTemplate) {
-            command = Mustache.render(browserInfo.winOpenCmdTemplate, {
-                pageUrl: pageUrl
-            });
-        }
-        else
-            command = `start /D "${browserDirPath}" ${browserExecFileName} ${browserInfo.cmd} ${pageUrl}`;
-    }
-    else if (OS.mac) {
-        command = Mustache.render(browserInfo.macOpenCmdTemplate, {
-            path:    browserInfo.path,
-            cmd:     browserInfo.cmd,
-            pageUrl: pageUrl
-        });
-    }
-    else
-        return; //TODO: support OS.linux
+    var command = getOpenCommand(browserInfo, pageUrl);
 
     try {
         await exec(command);

@@ -109,14 +109,17 @@ Takes a screenshot of the browser window where the specified web page is opened.
 Object that contains information about the browser installed on the machine.
 
 **Kind**: global typedef  
+**Note**: If BrowserInfo#winOpenCmdTemplate is defined on Windows, it will be rendered and used as open command.
+ Also, BrowserInfo#path may be undefined in that case. Otherwise, default browser launching mechanism will be used and
+ BrowserInfo#path is required.<br>
 **Properties**
 
 | Name | Type | Description |
 | --- | --- | --- |
-| path | <code>string</code> &#124; <code>undefined</code> | The path to the executable file that starts the browser. It may be undefined if                                      BrowserInfo#winOpenCmdTemplate is defined. |
+| path | <code>string</code> &#124; <code>undefined</code> | The path to the executable file that starts the browser. |
 | cmd | <code>string</code> | Additional command line parameters. |
-| macOpenCmdTemplate | <code>string</code> &#124; <code>undefined</code> | A [Mustache template](https://github.com/janl/mustache.js#templates)                                                    that provides parameters for launching the browser on a MacOS machine. |
-| winOpenCmdTemplate | <code>string</code> &#124; <code>undefined</code> | A [Mustache template](https://github.com/janl/mustache.js#templates)                                                    that provides parameters for launching the browser on a Windows machine,                                                    if BrowserInfo#path is undefined. |
+| macOpenCmdTemplate | <code>string</code> | A [Mustache template](https://github.com/janl/mustache.js#templates)                                                    that provides parameters for launching the browser on a MacOS machine. |
+| winOpenCmdTemplate | <code>string</code> &#124; <code>undefined</code> | A [Mustache template](https://github.com/janl/mustache.js#templates)                                                    that provides parameters for launching the browser on a Windows machine. |
 
 **Example**  
 ```js

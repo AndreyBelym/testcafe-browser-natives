@@ -73,14 +73,10 @@ async function addInstallation (installations, name, instPath) {
 }
 
 async function detectMicrosoftEdge () {
-    try {
-        await exec('reg query HKCU\\Software\\Classes\\ActivatableClasses /s /f MicrosoftEdge /k');
-    }
-    catch (e) {
-        return null;
-    }
+    var regKey = 'HKCU\\Software\\Classes\\ActivatableClasses';
+    var stdout = await exec(`chcp 65001 | reg query ${regKey} /s /f MicrosoftEdge /k && echo SUCCESS || echo FAIL`);
 
-    return ALIASES['edge'];
+    return /SUCCESS/.test(stdout) ? ALIASES['edge'] : null;
 }
 
 async function findWindowsBrowsers () {
@@ -163,14 +159,15 @@ async function findBrowsers () {
 // API
 /** @typedef {Object} BrowserInfo
  * @description Object that contains information about the browser installed on the machine.
- * @property {string|undefined} path - The path to the executable file that starts the browser. It may be undefined if
- *                                      BrowserInfo#winOpenCmdTemplate is defined.
+ * @note If BrowserInfo#winOpenCmdTemplate is defined on Windows, it will be rendered and used as open command.
+ *  Also, BrowserInfo#path may be undefined in that case. Otherwise, default browser launching mechanism will be used and
+ *  BrowserInfo#path is required.<br>
+ * @property {string|undefined} path - The path to the executable file that starts the browser.
  * @property {string} cmd - Additional command line parameters.
- * @property {string|undefined} macOpenCmdTemplate - A [Mustache template](https://github.com/janl/mustache.js#templates)
+ * @property {string} macOpenCmdTemplate - A [Mustache template](https://github.com/janl/mustache.js#templates)
  *                                                    that provides parameters for launching the browser on a MacOS machine.
  * @property {string|undefined} winOpenCmdTemplate - A [Mustache template](https://github.com/janl/mustache.js#templates)
- *                                                    that provides parameters for launching the browser on a Windows machine,
- *                                                    if BrowserInfo#path is undefined.
+ *                                                    that provides parameters for launching the browser on a Windows machine.
  * @example
  *  {
  *       path: 'C:\\ProgramFiles\\...\\firefox.exe',

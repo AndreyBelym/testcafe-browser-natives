@@ -27,7 +27,11 @@ $ npm install testcafe-browser-natives
 ```js
 document.title = document.location.toString()
 ```
-
+Also note, that Microsoft Edge truncates window title to hostname, if `document.title` set to plain URL ( e.g. `document.title = http://localhost:1337/page` gives just `localhost` in window title).
+So you need to add some characters before URL in order to get it in window title.
+```js
+document.title = 'title: ' + document.location.toString()
+```
 For API reference, see the [API](API.md) document.
 
 #Testing
