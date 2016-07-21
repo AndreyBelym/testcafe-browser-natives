@@ -1,4 +1,5 @@
 var expect         = require('chai').expect;
+var OS             = require('os-family');
 var browserNatives = require('../../lib/index');
 
 describe('open', function () {
@@ -45,22 +46,19 @@ describe('open', function () {
             .catch(done);
     });
 
-    it('Should not raise an error if winOpenCmdTemplate is defined and browser path is not specified', function (done) {
+    it('Should not raise an error if winOpenCmdTemplate is defined and browser path is not specified', function () {
         var browserInfo = {
             path:               '',
             winOpenCmdTemplate: 'echo test'
         };
 
-        var open = browserNatives
+        return browserNatives
             .open(browserInfo)
-            .catch(function () {
-                throw new Error('Promise resolution expected');
-            });
+            .catch(function (err) {
+                if (OS.win)
+                    throw new Error('Promise resolution expected');
 
-        open
-            .then(function () {
-                done();
-            })
-            .catch(done);
+                expect(err.message).eql('Unable to run the browser. The browser path or command template is not specified.');
+            });
     });
 });
