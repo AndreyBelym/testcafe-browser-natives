@@ -7,12 +7,14 @@ var flatten      = require('gulp-flatten');
 var mocha        = require('gulp-mocha');
 var msbuild      = require('gulp-msbuild');
 var concat       = require('gulp-concat');
-var jsdoc        = require('gulp-jsdoc-to-markdown');
+var dmd          = require('dmd');
+var jsdocParse   = require('jsdoc-parse');
 var remoteSrc    = require('gulp-remote-src');
 var changed      = require('gulp-changed');
 var chmod        = require('gulp-chmod');
 var del          = require('del');
 var through      = require('through2');
+var PassThrough  = require('stream').PassThrough;
 var Promise      = require('pinkie');
 var pify         = require('pify');
 var assign       = require('lodash').assign;
@@ -38,6 +40,50 @@ function make (options) {
     });
 }
 
+
+function jsdoc (options) {
+    return through.obj(function (file, enc, callback) {
+        var self = this;
+
+        if (file.isNull()) {
+          console.log('null');
+        }
+        if (file.isBuffer()) {
+            console.log('buffer');
+
+            var buf = new Buffer(0);
+
+            var inputStream = new PassThrough();
+
+            console.log(file.contents);
+
+            inputStream.end(file.contents);
+
+            var jsdoc2mdStream = inputStream
+                .pipe(jsdocParse())
+                .pipe(dmd(options));
+
+            jsdoc2mdStream.on('data', function (chunk) {
+                buf = Buffer.concat([ buf, chunk ]);
+            });
+
+            jsdoc2mdStream.on('end', function () {
+                file.contents = buf;
+                return callback(null, file);
+            });
+
+            jsdoc2mdStream.on('error', function (err) {
+                console.log(err);
+            });
+        }
+
+    if (file.isStream()) {
+        console.log('stream');
+        file.contents = file.contents.pipe(jsdoc2md(options));
+        return callback(null, file);
+    }
+  })
+}
 // Windows bin
 gulp.task('clean-win-bin', function () {
     return del('bin/win');
@@ -192,7 +238,7 @@ gulp.task('clean-lib', function () {
     return del('lib');
 });
 
-gulp.task('transpile-lib', ['lint', 'clean-lib'], function () {
+gulp.task('transpile-lib', ['clean-lib'], function () {
     return gulp
         .src('src/**/*.js')
         .pipe(babel())
