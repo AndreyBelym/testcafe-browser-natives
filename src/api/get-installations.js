@@ -1,4 +1,5 @@
 import Promise from 'pinkie';
+import debug from 'debug';
 import OS from 'os-family';
 import which from 'which-promise';
 import exists from '../utils/fs-exists-promised';
@@ -9,6 +10,7 @@ import ALIASES from '../aliases';
 // Installation info cache
 var installationsCache = null;
 
+const debugLogger = debug('testcafe-browser-tools:get-installations');
 
 // Find installations for different platforms
 async function addInstallation (installations, name, instPath) {
@@ -32,7 +34,11 @@ async function detectMicrosoftEdge () {
     var regKey = 'HKCU\\Software\\Classes\\ActivatableClasses';
     var stdout = await execWinShellUtf8(`@echo off & reg query ${regKey} /s /f MicrosoftEdge /k && echo SUCCESS || echo FAIL`);
 
-    return /SUCCESS/.test(stdout) ? ALIASES['edge'] : null;
+    const success = /SUCCESS/.test(stdout);
+
+    debugLogger(success ? 'Edge is found' : 'Edge is not found');
+
+    return success ? ALIASES['edge'] : null;
 }
 
 async function searchInRegistry (registryRoot) {

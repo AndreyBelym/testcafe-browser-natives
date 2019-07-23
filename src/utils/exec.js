@@ -1,7 +1,9 @@
 import childProc from 'child_process';
+import debug from 'debug';
 import OS from 'os-family';
 import promisify from './promisify';
 
+const debugLogger = debug('testcafe-browser-tools:exec');
 
 const OSASCRIPT_PATH = '/usr/bin/osascript';
 
@@ -29,5 +31,16 @@ export async function execWinShellUtf8 (command) {
     var restoreCodePageCmd = 'chcp %i)';
 
     // NOTE: To avoid terminal errors, we need to restore the original code page after the command is executed.
-    return await exec(`${setCodePageCmd} & ${command} & ${restoreCodePageCmd}`);
+    return new Promise((resolve, reject) => {
+        childProc.exec(`${setCodePageCmd} & ${command} & ${restoreCodePageCmd}`, (error, stdout, stderr)=>{
+            if (error) {
+                debugLogger(error);
+                reject(error);
+            } else {
+                debugLogger('stdout', stdout);
+                debugLogger('stderr', stderr);
+                resolve(stdout);
+            }
+        });
+    });
 }
