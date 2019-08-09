@@ -1,7 +1,7 @@
 import path from 'path';
 import Mustache from 'mustache';
 import OS from 'os-family';
-import { exec } from '../utils/exec';
+import { spawn } from '../utils/exec';
 import exists from '../utils/fs-exists-promised';
 import { MESSAGES, getText } from '../messages';
 
@@ -72,9 +72,9 @@ export default async function (browserInfo, pageUrl) {
     var command = getOpenCommand(browserInfo, pageUrl);
 
     try {
-        await exec(command);
+        await spawn(command);
     }
     catch (err) {
-        throw new Error(getText(MESSAGES.unableToRunBrowser, browserInfo.path));
+        throw new Error(getText(MESSAGES.unableToRunBrowser, browserInfo.path) + '\n\n' + err.stack);
     }
 }

@@ -31,3 +31,15 @@ export async function execWinShellUtf8 (command) {
     // NOTE: To avoid terminal errors, we need to restore the original code page after the command is executed.
     return await exec(`${setCodePageCmd} & ${command} & ${restoreCodePageCmd}`);
 }
+
+export function spawn (command) {
+    return new Promise((resolve, reject) => {
+        const cp = childProc.spawn(command, { shell: true, stdio: 'inherit' });
+
+        setTimeout(() => resolve(), 3000);
+
+        cp.on('error', e => reject(new Error(`Error creating process ${command}: ${e.stack}`)));
+
+        cp.on('exit', code => code ? reject(new Error(`Process ${command} exited, code ${code}`)) : resolve());
+    });
+}
