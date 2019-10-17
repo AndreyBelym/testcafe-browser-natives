@@ -25,9 +25,13 @@ var packageInfo  = require('./package.json');
 const EXEC_MASK           = parseInt('111', 8);
 const UNIX_BINARY_PATH_RE = /^package\/bin\/(mac|linux)/;
 
-const MACOSX_DEPLOYMENT_TARGET = '10.14';
+const MACOSX_DEPLOYMENT_TARGET = '10.10';
 const MAC_APP_NAME             = 'TestCafe Browser Tools.app';
-const MAC_BINARY_PATH          = `bin/mac/${MAC_APP_NAME}/Contents/MacOS`;
+const MAC_APP_PATH             = `bin/mac/${MAC_APP_NAME}`;
+const MAC_BINARY_PATH          = 'Contents/MacOS';
+const MAC_MAIN_BINARY_PATH     = `${MAC_APP_PATH}${MAC_BINARY_PATH}`;
+const MAC_SERVICE_APP_NAME     = 'TestCafe Browser Tools Service.app';
+const MAC_SERVICE_BINARY_PATH  = `${MAC_APP_PATH}/Contents/XPCServices/${MAC_SERVICE_APP_NAME}/${MAC_BINARY_PATH}`;
 
 tmp.setGracefulCleanup();
 
@@ -84,7 +88,7 @@ gulp.task('copy-win-executables', ['build-win-executables'], function () {
 
 // Mac bin
 gulp.task('clean-mac-bin', function () {
-    return del(MAC_BINARY_PATH);
+    return del([MAC_MAIN_BINARY_PATH, MAC_SERVICE_BINARY_PATH]);
 });
 
 gulp.task('build-mac-executables', ['clean-mac-bin'], function () {

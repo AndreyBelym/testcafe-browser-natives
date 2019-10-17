@@ -5,17 +5,17 @@
 	<key>CFBundleDevelopmentRegion</key>
 	<string>en</string>
 	<key>CFBundleExecutable</key>
-	<string>testcafe-browser-tools</string>
+	<string>testcafe-browser-tools-service</string>
 	<key>CFBundleIdentifier</key>
-	<string>com.devexpress.testcafe-browser-tools</string>
+	<string>com.devexpress.testcafe-browser-tools.service</string>
 	<key>CFBundleInfoDictionaryVersion</key>
 	<string>6.0</string>
 	<key>CFBundleDisplayName</key>
-	<string>TestCafe Browser Tools</string>
+	<string>TestCafe Browser Tools Service</string>
 	<key>CFBundleName</key>
-	<string>TBCTools</string>
+	<string>TCBToolsSvc</string>
 	<key>CFBundlePackageType</key>
-	<string>APPL</string>
+	<string>XPC!</string>
 	<key>CFBundleShortVersionString</key>
 	<string>1.0</string>
 	<key>CFBundleSupportedPlatforms</key>
