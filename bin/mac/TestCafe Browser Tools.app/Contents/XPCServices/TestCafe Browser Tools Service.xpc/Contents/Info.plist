@@ -24,12 +24,16 @@
 	</array>
 	<key>CFBundleVersion</key>
 	<string>1</string>
-
+	
 	<key>XPCService</key>
 	<dict>
 		<key>ServiceType</key>
 		<string>Application</string>
 	</dict>
+	<key>CFBundleIconFile</key>
+    <string>testcafe.icns</string>
+	<key>NSAppleEventsUsageDescription</key>
+	<string>TestCafe uses Automation to take screenshots and control browser windows</string>
 	<key>NSHumanReadableCopyright</key>
 	<string>Copyright © 2019 DevExpress. All rights reserved.</string>
 </dict>
