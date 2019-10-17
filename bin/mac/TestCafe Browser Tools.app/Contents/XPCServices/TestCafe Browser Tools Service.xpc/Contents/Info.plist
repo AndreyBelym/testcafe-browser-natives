@@ -29,6 +29,8 @@
 	<dict>
 		<key>ServiceType</key>
 		<string>Application</string>
+		<key>JoinExistingSession</key>
+		<true/>
 	</dict>
 	<key>CFBundleIconFile</key>
     <string>testcafe.icns</string>

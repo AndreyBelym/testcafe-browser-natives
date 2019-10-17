@@ -72,11 +72,7 @@ BOOL haveScreenRecordingPermission () {
     return canRecord;
 }
 
-int findWindow (int argc, const char * argv[]) {
-    if (argc < 2) {
-        printf("Incorrect arguments\n");
-        return ERROR_EXIT_CODE;
-    }
+int findWindow () {
 
     @autoreleasepool {
         if (!haveScreenRecordingPermission())
@@ -87,7 +83,7 @@ int findWindow (int argc, const char * argv[]) {
         BOOL searchFinished              = NO;
         
         while (seachingAttemptsCount < MAX_SEARCHING_ATTEMPTS_COUNT && !searchFinished) {
-            windowDescriptor = getTestCafeWindowId([NSString stringWithUTF8String:argv[1]]);
+            windowDescriptor = getTestCafeWindowId(@"google");
             
             searchFinished = !!windowDescriptor && [windowDescriptor[@"osaId"] intValue] != 0;
 
@@ -103,9 +99,9 @@ int findWindow (int argc, const char * argv[]) {
             return ERROR_EXIT_CODE;
         }
 
-        printf("%d\n", [windowDescriptor[@"processId"] intValue]);
-        printf("%d\n", [windowDescriptor[@"cocoaId"] intValue]);
-        printf("%d\n", [windowDescriptor[@"osaId"] intValue]);
+        NSLog(@"%d", [windowDescriptor[@"processId"] intValue]);
+        NSLog(@"%d", [windowDescriptor[@"cocoaId"] intValue]);
+        NSLog(@"%d", [windowDescriptor[@"osaId"] intValue]);
 
         return SUCCESS_EXIT_CODE;
     }

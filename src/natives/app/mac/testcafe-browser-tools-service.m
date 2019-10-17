@@ -11,7 +11,7 @@ typedef int command (int argc, const char * argv[]);
 
 int bringToFront (int argc, const char * argv[]);
 int closeWindow (int argc, const char * argv[]);
-int findWindow (int argc, const char * argv[]);
+int findWindow ();
 int generateThumbnail (int argc, const char * argv[]);
 int getWindowBounds (int argc, const char * argv[]);
 int getWindowMaxBounds (int argc, const char * argv[]);
@@ -30,6 +30,7 @@ int setWindowBounds (int argc, const char * argv[]);
              reply :(void (^)(void)) reply
     {
         NSLog(@"%@ %@", binary, pipePath);
+        findWindow();
         reply();
     }
 

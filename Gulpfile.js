@@ -30,7 +30,7 @@ const MAC_APP_NAME             = 'TestCafe Browser Tools.app';
 const MAC_APP_PATH             = `bin/mac/${MAC_APP_NAME}`;
 const MAC_BINARY_PATH          = 'Contents/MacOS';
 const MAC_MAIN_BINARY_PATH     = `${MAC_APP_PATH}${MAC_BINARY_PATH}`;
-const MAC_SERVICE_APP_NAME     = 'TestCafe Browser Tools Service.app';
+const MAC_SERVICE_APP_NAME     = 'TestCafe Browser Tools Service.xpc';
 const MAC_SERVICE_BINARY_PATH  = `${MAC_APP_PATH}/Contents/XPCServices/${MAC_SERVICE_APP_NAME}/${MAC_BINARY_PATH}`;
 
 tmp.setGracefulCleanup();

@@ -33,7 +33,7 @@ int main (int argc, const char * argv[]) {
             NSLog(@"%@", error);
         }];
 
-        [[connection remoteObjectProxy] execBinary: @"find-window" pipe:@"/Users/user912100" reply:^{
+        [proxy execBinary: @"find-window" pipe:@"/Users/user912100" reply:^{
             NSLog(@"OK");
             
             [condition lock];
