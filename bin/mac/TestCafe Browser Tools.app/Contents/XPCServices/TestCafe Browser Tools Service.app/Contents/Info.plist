@@ -26,8 +26,13 @@
 	<string>1</string>
 	<key>CFBundleIconFile</key>
     <string>testcafe.icns</string>
-	<key>LSUIElement</key>
+	<key>LSBackgroundOnly</key>
 	<true/>
+	<key>XPCService</key>
+	<dict>
+		<key>ServiceType</key>
+		<string>Application</string>
+	</dict>
 	<key>NSAppleEventsUsageDescription</key>
 	<string>TestCafe uses Automation to take screenshots and control browser windows</string>
 	<key>NSHumanReadableCopyright</key>

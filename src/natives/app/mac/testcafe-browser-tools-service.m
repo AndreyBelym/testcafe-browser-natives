@@ -5,6 +5,7 @@
 
 #include <fcntl.h>
 #import <Cocoa/Cocoa.h>
+#include "./protocol.h"
 
 typedef int command (int argc, const char * argv[]);
 
@@ -20,7 +21,47 @@ int resize (int argc, const char * argv[]);
 int screenshot (int argc, const char * argv[]);
 int setWindowBounds (int argc, const char * argv[]);
 
+@interface ExecService: NSObject <ExecProtocol, NSXPCListenerDelegate>
+@end
+
+@implementation ExecService
+    - (void) execBinary: (NSString *) binary
+             pipe: (NSString *) pipePath
+             reply :(void (^)(void)) reply
+    {
+        NSLog(@"%@ %@", binary, pipePath);
+        reply();
+    }
+
+    - (BOOL) listener: (NSXPCListener *) listener
+             shouldAcceptNewConnection: (NSXPCConnection *) connection 
+    {
+        NSXPCInterface *myInterface = [NSXPCInterface interfaceWithProtocol: @protocol(ExecProtocol)];
+
+        connection.exportedInterface = myInterface;
+        connection.exportedObject    = self;
+
+        [connection resume];
+
+        return YES;
+    }
+@end
+
 int main (int argc, const char * argv[]) {
+    @autoreleasepool {
+        ExecService *service = [ExecService new];
+
+        NSXPCListener *listener = [NSXPCListener serviceListener];
+
+        listener.delegate = service;
+
+        [listener resume];
+
+        exit(1);
+    }
+}
+
+int mamain (int argc, const char * argv[]) {
     int fd = open(argv[1], O_WRONLY);
 
     if (fd != -1)

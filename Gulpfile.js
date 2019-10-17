@@ -104,7 +104,7 @@ gulp.task('build-mac-app', ['build-mac-executables'], function () {
     return gulp
         .src('src/natives/app/mac/Makefile')
         .pipe(make({
-            DEST: path.join(__dirname, MAC_BINARY_PATH),
+            DEST: path.join(__dirname, MAC_APP_PATH),
             MACOSX_DEPLOYMENT_TARGET
         }));
 });
